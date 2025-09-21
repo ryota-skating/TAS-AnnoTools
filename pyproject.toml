@@ -1,0 +1,9 @@
+[project]
+name = "fs-annotools3"
+version = "0.1.0"
+description = "TAS dataset creation tool for figure skating video annotation with frame-precise control"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp",
+]

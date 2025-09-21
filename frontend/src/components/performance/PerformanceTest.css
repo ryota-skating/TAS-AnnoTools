@@ -1,0 +1,471 @@
+/**
+ * Performance Test Component Styles
+ */
+
+.performance-test {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.test-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.test-header h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.test-description {
+  font-size: 1rem;
+  color: #6b7280;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.test-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.test-progress {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  color: #0369a1;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #bae6fd;
+  border-top: 2px solid #0369a1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.test-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  color: #dc2626;
+}
+
+.test-results {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.results-summary {
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.results-summary h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.overall-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.overall-status.passed {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.overall-status.failed {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+}
+
+.status-icon {
+  font-size: 1.25rem;
+}
+
+.status-text {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.status-text.passed {
+  color: #166534;
+}
+
+.status-text.failed {
+  color: #dc2626;
+}
+
+.status-count {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.generated-at {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.system-info {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.system-info h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.info-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.info-item {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.info-value {
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.info-value.supported {
+  color: #059669;
+}
+
+.info-value.unsupported {
+  color: #dc2626;
+}
+
+.info-value.user-agent {
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.test-results-list {
+  padding: 1.5rem;
+}
+
+.test-results-list h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.test-result {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.test-result.passed {
+  border-color: #86efac;
+}
+
+.test-result.failed {
+  border-color: #fca5a5;
+}
+
+.test-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.test-result.passed .test-header {
+  background: #f0fdf4;
+}
+
+.test-result.failed .test-header {
+  background: #fef2f2;
+}
+
+.test-status {
+  font-size: 1.25rem;
+}
+
+.test-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+  margin-left: 0.75rem;
+}
+
+.test-duration {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.test-error {
+  padding: 1rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border-bottom: 1px solid #fca5a5;
+}
+
+.test-metrics {
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.metric {
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.metric.passed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.metric.failed {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.metric-status {
+  font-size: 1rem;
+}
+
+.metric-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.metric-details {
+  display: flex;
+  gap: 0.5rem;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.metric-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.metric-requirement {
+  color: #6b7280;
+}
+
+.metric-extra {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.requirements-info {
+  padding: 1.5rem;
+  background: #f0f9ff;
+  border-top: 1px solid #bae6fd;
+}
+
+.requirements-info h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.requirements-info ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #1e40af;
+}
+
+.requirements-info li {
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .performance-test {
+    padding: 1rem;
+  }
+  
+  .test-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .info-item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  
+  .test-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .test-name {
+    margin-left: 0;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .test-header h2 {
+    color: #f9fafb;
+  }
+  
+  .test-description {
+    color: #d1d5db;
+  }
+  
+  .test-results {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .results-summary {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  
+  .results-summary h3,
+  .system-info h3,
+  .test-results-list h3 {
+    color: #f9fafb;
+  }
+  
+  .overall-status.passed {
+    background: #064e3b;
+    border-color: #065f46;
+  }
+  
+  .overall-status.failed {
+    background: #7f1d1d;
+    border-color: #991b1b;
+  }
+  
+  .system-info {
+    border-color: #4b5563;
+  }
+  
+  .info-label {
+    color: #f3f4f6;
+  }
+  
+  .test-result {
+    border-color: #4b5563;
+  }
+  
+  .test-result .test-header {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  
+  .test-result.passed .test-header {
+    background: #064e3b;
+  }
+  
+  .test-result.failed .test-header {
+    background: #7f1d1d;
+  }
+  
+  .test-name {
+    color: #f9fafb;
+  }
+  
+  .metric {
+    border-color: #4b5563;
+  }
+  
+  .metric.passed {
+    background: #064e3b;
+    border-color: #065f46;
+  }
+  
+  .metric.failed {
+    background: #7f1d1d;
+    border-color: #991b1b;
+  }
+  
+  .metric-name {
+    color: #f3f4f6;
+  }
+  
+  .metric-value {
+    color: #f9fafb;
+  }
+  
+  .requirements-info {
+    background: #1e293b;
+    border-color: #334155;
+  }
+  
+  .requirements-info h3 {
+    color: #38bdf8;
+  }
+  
+  .requirements-info ul {
+    color: #7dd3fc;
+  }
+}

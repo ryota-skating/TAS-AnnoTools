@@ -1,0 +1,55 @@
+{
+  "name": "fs-annotools3",
+  "version": "1.0.0",
+  "description": "TAS dataset creation tool for figure skating video annotation with frame-precise control",
+  "private": true,
+  "scripts": {
+    "build": "./scripts/build.sh",
+    "build:frontend": "./scripts/build.sh --frontend",
+    "build:backend": "./scripts/build.sh --backend",
+    "build:clean": "./scripts/build.sh --clean",
+    "build:full": "./scripts/build.sh --clean --install",
+    "dev": "./scripts/dev.sh",
+    "dev:frontend": "./scripts/dev.sh --frontend",
+    "dev:backend": "./scripts/dev.sh --backend",
+    "dev:install": "./scripts/dev.sh --install",
+    "test": "./scripts/test.sh",
+    "test:frontend": "./scripts/test.sh --frontend",
+    "test:backend": "./scripts/test.sh --backend",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "clean": "rm -rf frontend/dist backend/dist frontend/node_modules/.cache backend/node_modules/.cache",
+    "clean:all": "rm -rf frontend/dist backend/dist frontend/node_modules backend/node_modules node_modules",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "type-check": "npm run type-check:frontend && npm run type-check:backend",
+    "type-check:frontend": "cd frontend && npx tsc --noEmit",
+    "type-check:backend": "cd backend && npx tsc --noEmit"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "video-annotation",
+    "figure-skating",
+    "webcodecs",
+    "frame-precise",
+    "annotation-tool",
+    "research"
+  ],
+  "author": "ryota-skating",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryota-skating/TAS-AnnoTools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ryota-skating/TAS-AnnoTools/issues"
+  },
+  "homepage": "https://github.com/ryota-skating/TAS-AnnoTools#readme"
+}
