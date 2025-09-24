@@ -2,6 +2,8 @@
 
 TAS (Temporal Action Segmentation) Dataset Creation Tool for Video Annotation
 
+![demo.gif](https://github.com/ryota-skating/TAS-AnnoTools/blob/main/docs/demo.gif)
+
 ## Overview
 
 TAS-AnnoTools is a frame-precise video annotation tool designed for creating TAS (Temporal Action Segmentation) datasets from video content. The system provides minimal latency frame-by-frame control with WebCodecs API integration for research collaboration. While originally developed for figure skating analysis, the tool is designed to be adaptable for various action recognition and video analysis tasks.
