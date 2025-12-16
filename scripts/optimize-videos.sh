@@ -11,23 +11,52 @@
 #
 # Default preset: annotation
 
-set -e
+# set -e
 
-# Show help if requested
-if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-    echo "FS-AnnoTools3 Video Optimization Script"
-    echo ""
-    echo "Usage: $0 [preset]"
-    echo ""
-    echo "Available presets:"
-    echo "  preview    - Fast, low quality (854x480, CRF28, GOP15) for quick preview"
-    echo "  annotation - Balanced quality (1280px max, CRF23, GOP30) for annotation work (default)"
-    echo "  archive    - High quality (original resolution, CRF18, GOP30) for archival"
-    echo ""
-    echo "The script processes videos in backend/videos/original/ and outputs to backend/videos/optimized/"
-    echo "All videos are optimized for frame-precise playback with WebCodecs API compatibility."
-    exit 0
-fi
+# Parse command-line arguments
+FORCE_REPROCESS=false
+SKIP_EXISTING=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            echo "FS-AnnoTools3 Video Optimization Script"
+            echo ""
+            echo "Usage: $0 [options] [preset]"
+            echo ""
+            echo "Available presets:"
+            echo "  preview    - Fast, low quality (854x480, CRF28, GOP15) for quick preview"
+            echo "  annotation - Balanced quality (1280px max, CRF23, GOP30) for annotation work (default)"
+            echo "  archive    - High quality (original resolution, CRF18, GOP30) for archival"
+            echo ""
+            echo "Options:"
+            echo "  --force           - Force reprocessing of all videos (ignore existing files)"
+            echo "  --skip-existing   - Skip videos that already have optimized versions"
+            echo "  -h, --help        - Show this help message"
+            echo ""
+            echo "The script processes videos in backend/videos/original/ and outputs to backend/videos/optimized/"
+            echo "All videos are optimized for frame-precise playback with WebCodecs API compatibility."
+            exit 0
+            ;;
+        --force)
+            FORCE_REPROCESS=true
+            shift
+            ;;
+        --skip-existing)
+            SKIP_EXISTING=true
+            shift
+            ;;
+        preview|annotation|archive)
+            PRESET_ARG="$1"
+            shift
+            ;;
+        *)
+            error "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 # Colors for output
 RED='\033[0;31m'
@@ -100,7 +129,7 @@ fi
 log "Found ${#video_files[@]} video file(s) to process"
 
 # Quality presets for different use cases
-PRESET=${1:-annotation}
+PRESET=${PRESET_ARG:-annotation}
 
 # Set preset parameters based on selection
 case "$PRESET" in
@@ -142,12 +171,15 @@ for video_path in "${video_files[@]}"; do
     optimized_path="${OPTIMIZED_DIR}/${basename_no_ext}.mp4"
     
     log "Processing: $filename"
-    
-    # Check if already optimized
-    if [[ -f "$optimized_path" ]]; then
-        # Check if optimized file is newer than original
-        if [[ "$optimized_path" -nt "$video_path" ]]; then
-            log "Already optimized (newer): $filename"
+
+    # Check if already optimized based on command-line flags
+    if [[ -f "$optimized_path" ]] && [[ "$FORCE_REPROCESS" == false ]]; then
+        if [[ "$SKIP_EXISTING" == true ]]; then
+            log "Skipping (already exists): $filename"
+            ((skipped++))
+            continue
+        elif [[ "$optimized_path" -nt "$video_path" ]]; then
+            log "Already optimized (newer than original): $filename"
             ((skipped++))
             continue
         else
@@ -178,25 +210,17 @@ for video_path in "${video_files[@]}"; do
         fi
     fi
     
-    # Enhanced GOP analysis with frame rate consideration
+    # Enhanced GOP analysis with frame rate consideration (informational only)
     gop_info=$(ffprobe -v quiet -select_streams v:0 -show_frames -show_entries frame=key_frame,pkt_pts_time -of csv=p=0 "$video_path" 2>/dev/null | head -200)
-    
+
     if [[ -n "$gop_info" ]]; then
         # Count keyframes in first 200 frames for more accurate GOP estimation
         key_frames=$(echo "$gop_info" | grep -c "1" || echo "0")
         total_frames=$(echo "$gop_info" | wc -l)
-        
+
         if [[ $key_frames -gt 1 && $total_frames -gt 30 ]]; then
             current_gop=$((total_frames / key_frames))
-            log "Current GOP size: ~$current_gop frames"
-            
-            # Skip if already optimized with target GOP
-            target_gop=${GOP_VALUE:-30}
-            if [[ $current_gop -le $target_gop ]] && [[ -f "$optimized_path" ]]; then
-                log "Already optimized (GOP ≤ $target_gop): $filename"
-                ((skipped++))
-                continue
-            fi
+            log "Current GOP size: ~$current_gop frames (target: ${GOP_VALUE:-30})"
         fi
     fi
     

@@ -46,7 +46,6 @@ export interface FigureSkatingElement {
   direction?: TurnDirection; // Only for turn elements
   description?: string;
   color?: string; // For UI visualization
-  hotkey?: string; // Keyboard shortcut
 }
 
 // Element set categories for grouping
@@ -134,24 +133,24 @@ export const FIGURE_SKATING_ELEMENTS: Record<ElementId, FigureSkatingElement> = 
   39: { id: 39, name: 'LBO_Loop_Turn', category: 'Loop_Turn', direction: 'LBO', color: ELEMENT_COLORS['Loop_Turn'], description: 'Left Backward Outside Loop Turn' },
   
   // Other elements (40-54)
-  40: { id: 40, name: 'Twizzle', category: 'Twizzle', color: ELEMENT_COLORS['Twizzle'], description: 'Twizzle', hotkey: '1' },
-  41: { id: 41, name: 'Toe_Step', category: 'Toe_Step', color: ELEMENT_COLORS['Toe_Step'], description: 'Toe Step', hotkey: '2' },
-  42: { id: 42, name: 'Chasse', category: 'Chasse', color: ELEMENT_COLORS['Chasse'], description: 'Chassé', hotkey: '3' },
-  43: { id: 43, name: 'Mohawk', category: 'Mohawk', color: ELEMENT_COLORS['Mohawk'], description: 'Mohawk', hotkey: '4' },
-  44: { id: 44, name: 'Choctaw', category: 'Choctaw', color: ELEMENT_COLORS['Choctaw'], description: 'Choctaw', hotkey: '5' },
-  45: { id: 45, name: 'Change_of_Edge', category: 'Change_of_Edge', color: ELEMENT_COLORS['Change_of_Edge'], description: 'Change of Edge', hotkey: '6' },
-  46: { id: 46, name: 'Cross_Roll', category: 'Cross_Roll', color: ELEMENT_COLORS['Cross_Roll'], description: 'Cross Roll', hotkey: '7' },
-  47: { id: 47, name: 'Swing_Roll', category: 'Swing_Roll', color: ELEMENT_COLORS['Swing_Roll'], description: 'Swing Roll', hotkey: '8' },
-  48: { id: 48, name: 'Cross_Over', category: 'Cross_Over', color: ELEMENT_COLORS['Cross_Over'], description: 'Cross Over', hotkey: '9' },
-  49: { id: 49, name: 'Spiral', category: 'Spiral', color: ELEMENT_COLORS['Spiral'], description: 'Spiral', hotkey: 'q' },
-  50: { id: 50, name: 'Arabesque', category: 'Arabesque', color: ELEMENT_COLORS['Arabesque'], description: 'Arabesque', hotkey: 'w' },
-  51: { id: 51, name: 'Spread_Eagles', category: 'Spread_Eagles', color: ELEMENT_COLORS['Spread_Eagles'], description: 'Spread Eagles', hotkey: 'e' },
-  52: { id: 52, name: 'Ina_Bauers', category: 'Ina_Bauers', color: ELEMENT_COLORS['Ina_Bauers'], description: 'Ina Bauers', hotkey: 'r' },
-  53: { id: 53, name: 'Hydroblading', category: 'Hydroblading', color: ELEMENT_COLORS['Hydroblading'], description: 'Hydroblading', hotkey: 't' },
-  54: { id: 54, name: 'Knee_Slide', category: 'Knee_Slide', color: ELEMENT_COLORS['Knee_Slide'], description: 'Knee Slide', hotkey: 'y' },
-  
+  40: { id: 40, name: 'Twizzle', category: 'Twizzle', color: ELEMENT_COLORS['Twizzle'], description: 'Twizzle' },
+  41: { id: 41, name: 'Toe_Step', category: 'Toe_Step', color: ELEMENT_COLORS['Toe_Step'], description: 'Toe Step' },
+  42: { id: 42, name: 'Chasse', category: 'Chasse', color: ELEMENT_COLORS['Chasse'], description: 'Chassé' },
+  43: { id: 43, name: 'Mohawk', category: 'Mohawk', color: ELEMENT_COLORS['Mohawk'], description: 'Mohawk' },
+  44: { id: 44, name: 'Choctaw', category: 'Choctaw', color: ELEMENT_COLORS['Choctaw'], description: 'Choctaw' },
+  45: { id: 45, name: 'Change_of_Edge', category: 'Change_of_Edge', color: ELEMENT_COLORS['Change_of_Edge'], description: 'Change of Edge' },
+  46: { id: 46, name: 'Cross_Roll', category: 'Cross_Roll', color: ELEMENT_COLORS['Cross_Roll'], description: 'Cross Roll' },
+  47: { id: 47, name: 'Swing_Roll', category: 'Swing_Roll', color: ELEMENT_COLORS['Swing_Roll'], description: 'Swing Roll' },
+  48: { id: 48, name: 'Cross_Over', category: 'Cross_Over', color: ELEMENT_COLORS['Cross_Over'], description: 'Cross Over' },
+  49: { id: 49, name: 'Spiral', category: 'Spiral', color: ELEMENT_COLORS['Spiral'], description: 'Spiral' },
+  50: { id: 50, name: 'Arabesque', category: 'Arabesque', color: ELEMENT_COLORS['Arabesque'], description: 'Arabesque' },
+  51: { id: 51, name: 'Spread_Eagles', category: 'Spread_Eagles', color: ELEMENT_COLORS['Spread_Eagles'], description: 'Spread Eagles' },
+  52: { id: 52, name: 'Ina_Bauers', category: 'Ina_Bauers', color: ELEMENT_COLORS['Ina_Bauers'], description: 'Ina Bauers' },
+  53: { id: 53, name: 'Hydroblading', category: 'Hydroblading', color: ELEMENT_COLORS['Hydroblading'], description: 'Hydroblading' },
+  54: { id: 54, name: 'Knee_Slide', category: 'Knee_Slide', color: ELEMENT_COLORS['Knee_Slide'], description: 'Knee Slide' },
+
   // None (55)
-  55: { id: 55, name: 'NONE', category: 'NONE', color: ELEMENT_COLORS['NONE'], description: 'No Element', hotkey: '0' },
+  55: { id: 55, name: 'NONE', category: 'NONE', color: ELEMENT_COLORS['NONE'], description: 'No Element' },
 };
 
 // Element sets grouped by category (matching mapping_step_set.txt)
@@ -215,18 +214,18 @@ export function getElementsByCategory(category: ElementCategory): FigureSkatingE
 // Array format for easier iteration
 export const FIGURE_SKATING_ELEMENTS_ARRAY: FigureSkatingElement[] = Object.values(FIGURE_SKATING_ELEMENTS);
 
-// Most common elements with hotkeys for quick access
+// Most common elements for quick access
 export const QUICK_ACCESS_ELEMENTS: FigureSkatingElement[] = [
-  FIGURE_SKATING_ELEMENTS[40], // Twizzle - 1
-  FIGURE_SKATING_ELEMENTS[41], // Toe_Step - 2
-  FIGURE_SKATING_ELEMENTS[42], // Chasse - 3
-  FIGURE_SKATING_ELEMENTS[43], // Mohawk - 4
-  FIGURE_SKATING_ELEMENTS[44], // Choctaw - 5
-  FIGURE_SKATING_ELEMENTS[45], // Change_of_Edge - 6
-  FIGURE_SKATING_ELEMENTS[46], // Cross_Roll - 7
-  FIGURE_SKATING_ELEMENTS[47], // Swing_Roll - 8
-  FIGURE_SKATING_ELEMENTS[48], // Cross_Over - 9
-  FIGURE_SKATING_ELEMENTS[55], // NONE - 0
+  FIGURE_SKATING_ELEMENTS[40], // Twizzle
+  FIGURE_SKATING_ELEMENTS[41], // Toe_Step
+  FIGURE_SKATING_ELEMENTS[42], // Chasse
+  FIGURE_SKATING_ELEMENTS[43], // Mohawk
+  FIGURE_SKATING_ELEMENTS[44], // Choctaw
+  FIGURE_SKATING_ELEMENTS[45], // Change_of_Edge
+  FIGURE_SKATING_ELEMENTS[46], // Cross_Roll
+  FIGURE_SKATING_ELEMENTS[47], // Swing_Roll
+  FIGURE_SKATING_ELEMENTS[48], // Cross_Over
+  FIGURE_SKATING_ELEMENTS[55], // NONE
 ];
 
 export function isTurnElement(element: FigureSkatingElement): boolean {
@@ -235,8 +234,4 @@ export function isTurnElement(element: FigureSkatingElement): boolean {
 
 export function getElementColor(elementId: ElementId): string {
   return FIGURE_SKATING_ELEMENTS[elementId]?.color || ELEMENT_COLORS['NONE'];
-}
-
-export function getElementByHotkey(hotkey: string): FigureSkatingElement | undefined {
-  return Object.values(FIGURE_SKATING_ELEMENTS).find(element => element.hotkey === hotkey);
 }

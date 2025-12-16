@@ -15,6 +15,7 @@ import { logger } from './utils/logger';
 import { setupDatabase } from './services/database';
 import { registerRoutes } from './routes';
 import { setupAuthMiddleware } from './middleware/auth';
+import { VideoCacheService } from './services/videoCacheService';
 
 import path from 'path';
 
@@ -28,7 +29,31 @@ async function start() {
   try {
     // Register plugins
     await fastify.register(cors, {
-      origin: config.cors.origin,
+      origin: async (origin, cb) => {
+        try {
+          // originがundefinedの場合(Postmanなど)
+          if (!origin) return true;
+
+          const hostname = new URL(origin).hostname;
+
+          // localhostを許可
+          if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return true;
+          }
+
+          // Cloudflareトンネル (*.trycloudflare.com) を許可
+          if (/\.trycloudflare\.com$/.test(hostname)) {
+            return true;
+          }
+
+          // それ以外は拒否
+          logger.warn(`CORS blocked: ${origin}`);
+          return false;
+        } catch (err) {
+          logger.warn(`Invalid origin: ${origin}`);
+          return false;
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -60,7 +85,11 @@ async function start() {
     await setupDatabase();
     logger.info('Database initialized successfully');
 
-    // Video optimizer initialization removed - using filesystem-based approach
+    // Preload video metadata cache for optimal performance with multiple clients
+    const cacheService = VideoCacheService.getInstance();
+    await cacheService.initialize();
+    await cacheService.preloadAllVideoMetadata();
+    logger.info('Video metadata cache preloaded successfully');
 
     // Setup authentication middleware
     await setupAuthMiddleware(fastify);

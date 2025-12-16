@@ -58,14 +58,93 @@ export class VideoCacheService {
   }
 
   /**
-   * Initialize cache directory
+   * Initialize cache directory and preload video metadata
    */
   public async initialize(): Promise<void> {
     const cacheDir = path.dirname(this.videoCachePath);
     try {
       await fs.mkdir(cacheDir, { recursive: true });
+      // Preload video cache on initialization
+      await this.loadVideoCache();
+      logger.info('VideoCacheService initialized successfully');
     } catch (error) {
-      logger.error('Failed to create cache directory', { error });
+      logger.error('Failed to initialize VideoCacheService', { error });
+    }
+  }
+
+  /**
+   * Preload all video metadata into memory cache
+   * Called during server startup for optimal performance
+   */
+  public async preloadAllVideoMetadata(): Promise<void> {
+    const videosDir = path.join(__dirname, '../../videos');
+    const optimizedDir = path.join(videosDir, 'optimized');
+
+    try {
+      // Ensure video cache is loaded
+      await this.loadVideoCache();
+
+      // Check if optimized directory exists
+      try {
+        await fs.access(optimizedDir);
+      } catch {
+        logger.warn('Optimized videos directory not found, skipping preload', { path: optimizedDir });
+        return;
+      }
+
+      // Read all video files
+      const files = await fs.readdir(optimizedDir);
+      const videoFiles = files.filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.mp4', '.webm', '.mov'].includes(ext);
+      });
+
+      logger.info('Preloading video metadata', { count: videoFiles.length });
+
+      // Load metadata for each video
+      let loadedCount = 0;
+      let cachedCount = 0;
+
+      for (const filename of videoFiles) {
+        const filePath = path.join(optimizedDir, filename);
+        const stats = await fs.stat(filePath);
+
+        // Check if cache is up to date
+        const cachedMetadata = await this.getVideoMetadata(filename);
+        if (cachedMetadata && cachedMetadata.lastOptimized >= stats.mtime.toISOString()) {
+          cachedCount++;
+          continue;
+        }
+
+        // Cache is missing or outdated - store basic metadata
+        const metadata: CachedVideoMetadata = {
+          id: filename,
+          title: path.parse(filename).name.replace(/-optimized$/, '').replace(/-/g, ' '),
+          filename: filename,
+          path: `/videos/optimized/${filename}`,
+          fps: 30, // Default, can be updated by video analyzer later
+          durationFrames: 0, // Default, can be updated by video analyzer later
+          width: 1920, // Default
+          height: 1080, // Default
+          size: stats.size,
+          hash: null,
+          createdAt: stats.mtime.toISOString(),
+          lastOptimized: stats.mtime.toISOString(),
+        };
+
+        await this.setVideoMetadata(filename, metadata);
+        loadedCount++;
+      }
+
+      await this.saveVideoCache();
+
+      logger.info('Video metadata preload complete', {
+        total: videoFiles.length,
+        loaded: loadedCount,
+        cached: cachedCount,
+      });
+    } catch (error) {
+      logger.error('Failed to preload video metadata', { error });
     }
   }
 
@@ -181,6 +260,15 @@ export class VideoCacheService {
   public async getVideoMetadata(videoId: string): Promise<CachedVideoMetadata | null> {
     const cache = await this.loadVideoCache();
     return cache.videos[videoId] || null;
+  }
+
+  /**
+   * Set video metadata in cache
+   */
+  public async setVideoMetadata(videoId: string, metadata: CachedVideoMetadata): Promise<void> {
+    const cache = await this.loadVideoCache();
+    cache.videos[videoId] = metadata;
+    // Note: saveVideoCache() should be called separately to persist changes to disk
   }
 
   /**

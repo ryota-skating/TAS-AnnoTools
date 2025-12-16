@@ -13,7 +13,6 @@ export interface ActionElement {
   category: string;
   description?: string;
   color?: string;
-  hotkey?: string;
 }
 
 export interface ActionCategory {
@@ -117,8 +116,7 @@ class MappingService {
         name,
         category,
         description: this.formatDescription(name),
-        color: this.generateColor(category, id),
-        hotkey: this.generateHotkey(id, name)
+        color: this.generateColor(category, id)
       };
     });
   }
@@ -239,33 +237,6 @@ class MappingService {
     };
 
     return categoryColors[category] || categoryColors['Other'];
-  }
-
-  /**
-   * Generate hotkey for quick access
-   */
-  private generateHotkey(id: number, name: string): string | undefined {
-    // Special hotkeys for common elements
-    const specialHotkeys: Record<string, string> = {
-      'Twizzle': '1',
-      'Toe_Step': '2',
-      'Chasse': '3',
-      'Mohawk': '4',
-      'Choctaw': '5',
-      'Change_of_Edge': '6',
-      'Cross_Roll': '7',
-      'Swing_Roll': '8',
-      'Cross_Over': '9',
-      'NONE': '0',
-      'Spiral': 'q',
-      'Arabesque': 'w',
-      'Spread_Eagles': 'e',
-      'Ina_Bauers': 'r',
-      'Hydroblading': 't',
-      'Knee_Slide': 'y'
-    };
-
-    return specialHotkeys[name];
   }
 
   /**

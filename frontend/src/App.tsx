@@ -7,7 +7,6 @@ import { VideoSelector } from './components/video/VideoSelector';
 
 import { AnnotationPanel } from './components/annotation/AnnotationPanel';
 import type { AnnotationSegment, LabelSet, VideoMetadata } from './types/api';
-import { useFigureSkatingHotkeys } from './hooks/useFigureSkatingHotkeys';
 import { apiService } from './services/api';
 import './App.css';
 
@@ -121,7 +120,7 @@ function AppContent() {
       const annotations = await apiService.getVideoAnnotations(videoId);
       setSegments(annotations);
       
-      // Load label set for hotkeys
+      // Load label set
       const labelSetData = await apiService.getLabelSet('default');
       setLabelSet(labelSetData);
     } catch (error) {
@@ -135,49 +134,6 @@ function AppContent() {
     setVideoFps(fps);
     loadAnnotations();
   }, [loadAnnotations]);
-
-  const handleQuickAnnotate = useCallback((elementId: number) => {
-    if (selectedSegment) {
-      const updatedSegment: AnnotationSegment = {
-        ...selectedSegment,
-        elementId,
-        updatedAt: new Date().toISOString()
-      };
-      handleSegmentUpdate(updatedSegment);
-    } else if (selectionRange) {
-      const newSegment: Omit<AnnotationSegment, 'id' | 'createdAt' | 'updatedAt'> = {
-        videoId,
-        startFrame: selectionRange.start,
-        endFrame: selectionRange.end,
-        elementId,
-        annotatorId: 'current-user'
-      };
-      handleSegmentCreate(newSegment);
-    }
-  }, [selectedSegment, selectionRange, videoId, handleSegmentCreate, handleSegmentUpdate]);
-
-  const handleDeleteCurrentSegment = useCallback(() => {
-    if (selectedSegment) {
-      handleSegmentDelete(selectedSegment.id);
-    }
-  }, [selectedSegment, handleSegmentDelete]);
-
-  const handleClearSelection = useCallback(() => {
-    setSelectionRange(null);
-    setSelectedSegment(null);
-  }, []);
-
-  useFigureSkatingHotkeys({
-    onQuickAnnotate: handleQuickAnnotate,
-    onDeleteCurrentSegment: handleDeleteCurrentSegment,
-    onSaveAnnotations: handleSaveAnnotations,
-    onClearSelection: handleClearSelection
-  }, {
-    enabled: isAuthenticated && videoDuration > 0,
-    labelSet,
-    selectedSegment,
-    selectionRange
-  });
 
   if (loading) {
     return (
@@ -205,6 +161,7 @@ function AppContent() {
                   fps={videoFps}
                   currentFrame={currentFrame}
                   annotationLabels={annotationLabels}
+                  labelSet={labelSet}
                   onFrameChange={setCurrentFrame}
                   onReady={handleVideoReady}
                   onSegmentCreate={(startFrame, endFrame, elementId) => {
@@ -237,6 +194,7 @@ function AppContent() {
                   onFrameClick={handleFrameChange}
                   videoFilename={videoMetadata?.filename || videoId}
                   onAnnotationLabelsChange={setAnnotationLabels}
+                  labelSet={labelSet}
                 />
               </div>
             </>

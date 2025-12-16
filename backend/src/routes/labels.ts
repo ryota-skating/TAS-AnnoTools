@@ -34,7 +34,6 @@ export async function labelRoutes(fastify: FastifyInstance) {
           elementId: element.id,
           color: element.color || getDefaultColor(element.id),
           description: element.description || element.name.replace(/_/g, ' '),
-          hotkey: element.hotkey || getDefaultHotkey(element.id),
           enabled: true,
           name: element.name,
           category: element.category
@@ -275,19 +274,4 @@ function getDefaultColor(elementId: number): string {
   
   // Individual elements get unique colors
   return colors[5 + (elementId - 40) % (colors.length - 5)];
-}
-
-function getDefaultHotkey(elementId: number): string | undefined {
-  // Assign hotkeys for most common elements
-  const hotkeys: Record<number, string> = {
-    0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', // Three_Turn
-    40: 'T', // Twizzle
-    41: 'S', // Toe_Step
-    42: 'C', // Chasse
-    43: 'M', // Mohawk
-    49: 'P', // Spiral
-    55: '0', // NONE
-  };
-  
-  return hotkeys[elementId];
 }

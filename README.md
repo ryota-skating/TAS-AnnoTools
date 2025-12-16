@@ -42,6 +42,33 @@ TAS-AnnoTools is a frame-precise video annotation tool designed for creating TAS
 - **FFmpeg**: Required for video optimization
 - **Chrome Browser**: For WebCodecs support
 
+### 🌐 External Deployment (Cloudflare Tunnel)
+
+TAS-AnnoTools is deployed with a **fixed public URL** via Cloudflare Tunnel:
+
+**Public URL**: `https://app.tas-annotools.com`
+
+**Quick Setup:**
+```cmd
+# Start all services (Backend + Frontend + Cloudflare Tunnel)
+start-all.bat
+```
+
+This will open 3 windows:
+- Backend Server (port 3001)
+- Frontend Server (port 5173)
+- Cloudflare Tunnel (public access)
+
+**Stop all services:**
+```cmd
+stop-all.bat
+```
+
+**Cost**: ~¥1/year (domain only, Cloudflare Tunnel is free)
+
+📖 **See deployment guide:**
+- [Complete Deployment Guide](docs/DEPLOYMENT.md) - Setup, troubleshooting & security
+
 ### Installation
 
 ```bash
@@ -375,6 +402,63 @@ The system includes pre-configured support for figure skating action annotation:
 - **Edge Work**: Change of Edge, Cross Roll, Swing Roll, Cross Over
 - **Field Moves**: Spiral, Arabesque, Spread Eagles, Ina Bauers, Hydroblading, Knee Slide
 - **Special**: NONE (for non-annotated segments)
+
+## 📝 CSV-Based Label Management
+
+TAS-AnnoTools now supports easy label management through CSV files. This allows you to modify element colors, add new elements, and reorganize categories without touching the code.
+
+### Quick Start
+
+```bash
+# 1. Edit the CSV file
+# Open mapping/labels.csv in your editor
+
+# 2. Validate changes
+uv run scripts/csv_to_mapping.py mapping/labels.csv --dry-run
+
+# 3. Apply changes
+uv run scripts/csv_to_mapping.py mapping/labels.csv
+
+# 4. Restart backend server
+cd backend
+npm run dev
+```
+
+### CSV Format
+
+```csv
+id,set_label,element_label,color
+0,Three_Turn,RFI_Three_Turn,#3b82f6
+1,Three_Turn,RFO_Three_Turn,#3b82f6
+...
+```
+
+### Common Workflows
+
+**Change Colors:**
+```csv
+id,set_label,element_label,color
+0,Three_Turn,RFI_Three_Turn,#ff0000
+1,Three_Turn,RFO_Three_Turn,#ff0000
+```
+
+**Add New Element:**
+```csv
+...
+55,NONE,NONE,#6b7280
+56,Jump,Single_Axel,#ff00ff
+```
+
+**⚠️ Important**: Never change existing element IDs - this will break existing annotations!
+
+### Full Documentation
+
+See [CSV Label Management Guide](docs/CSV_LABEL_MANAGEMENT.md) for:
+- Detailed CSV format specification
+- All available commands and options
+- Common workflows and examples
+- Troubleshooting guide
+- Backup and recovery procedures
 
 ## 📡 API Endpoints
 

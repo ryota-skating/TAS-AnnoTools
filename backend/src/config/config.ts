@@ -75,9 +75,27 @@ const config: AppConfig = {
   },
   
   cors: {
-    origin: process.env.NODE_ENV === 'production'
-      ? process.env.CORS_ORIGIN?.split(',') || false
-      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+    origin: (() => {
+      // 優先: .env に CORS_ORIGIN があればそれを使う（複数可）
+      if (process.env.CORS_ORIGIN) {
+        return process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+      }
+
+      // 本番環境（Cloudflareドメイン含む）を許可
+      if (process.env.NODE_ENV === 'production') {
+        return [
+          'https://*.trycloudflare.com',
+          'https://your-domain.com', // ← 将来カスタムドメインを使う場合ここに追記
+        ];
+      }
+
+      // 開発環境（ローカル）を許可
+      return [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:3000',
+      ];
+    })(),
   },
   
   rateLimit: {

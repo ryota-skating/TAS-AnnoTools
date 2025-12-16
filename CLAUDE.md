@@ -46,7 +46,7 @@ This is **FS-AnnoTools3** - a TAS (Technical Artistic Score) dataset creation to
 
 ### Data Management
 - Local auto-save (IndexedDB) + server versioned storage
-- Label set management with colors, descriptions, and hotkeys
+- Label set management with colors and descriptions
 - JSON/CSV export, JSON import
 - Multi-video project support with progress tracking
 

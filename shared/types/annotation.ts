@@ -65,7 +65,6 @@ export interface LabelItem {
   elementId: ElementId;
   color: string; // Hex color for visualization
   description?: string;
-  hotkey?: string; // Keyboard shortcut (single key)
   enabled: boolean;
 }
 

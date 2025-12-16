@@ -181,23 +181,6 @@
   font-weight: 500;
 }
 
-/* ホットキー表示 */
-.label-hotkey {
-  background: #e2e8f0;
-  color: #475569;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 3px;
-  margin-left: 8px;
-  flex-shrink: 0;
-}
-
-.label-selector-item.selected .label-hotkey {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
 /* 現在の選択インジケーター */
 .label-current-indicator {
   background: #f59e0b;

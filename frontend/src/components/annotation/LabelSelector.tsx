@@ -4,17 +4,20 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  FIGURE_SKATING_ELEMENTS_ARRAY, 
-  type FigureSkatingElement 
+import {
+  FIGURE_SKATING_ELEMENTS_ARRAY,
+  type FigureSkatingElement,
+  getElementById
 } from '@shared/types/figure-skating';
+import type { LabelSet } from '../../types/api';
 import './LabelSelector.css';
 
 interface LabelSelectorProps {
   isOpen: boolean;
   position: { x: number; y: number };
   currentLabel?: string;
-  onSelect: (element: FigureSkatingElement) => void;
+  labelSet?: LabelSet | null;
+  onSelect: (elementId: number) => void;
   onClose: () => void;
 }
 
@@ -22,6 +25,7 @@ export function LabelSelector({
   isOpen,
   position,
   currentLabel,
+  labelSet,
   onSelect,
   onClose
 }: LabelSelectorProps) {
@@ -32,24 +36,47 @@ export function LabelSelector({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // フィルタリングされたラベル一覧
-  const filteredElements = useMemo(() => {
-    if (!searchTerm.trim()) {
+  // Convert labelSet items to full elements with names and categories
+  const elements = useMemo(() => {
+    if (!labelSet?.items) {
       return FIGURE_SKATING_ELEMENTS_ARRAY;
     }
 
+    return labelSet.items
+      .filter(item => item.enabled)
+      .map(item => {
+        // Try to get base element for existing IDs, but don't require it
+        const baseElement = getElementById(item.elementId);
+
+        // Create element object from labelSet data
+        return {
+          id: item.elementId,
+          name: item.name || `Element_${item.elementId}`,
+          category: item.category || 'Other',
+          color: item.color,
+          description: item.description || item.name?.replace(/_/g, ' ') || `Element ${item.elementId}`
+        } as FigureSkatingElement;
+      });
+  }, [labelSet]);
+
+  // フィルタリングされたラベル一覧
+  const filteredElements = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return elements;
+    }
+
     const term = searchTerm.toLowerCase().replace(/[_]/g, ' ');
-    return FIGURE_SKATING_ELEMENTS_ARRAY.filter(element => {
+    return elements.filter(element => {
       // アンダースコアを半角スペースに変換して検索
       const displayName = element.name.replace(/[_]/g, ' ').toLowerCase();
       const description = element.description?.toLowerCase() || '';
       const category = element.category.replace(/[_]/g, ' ').toLowerCase();
-      
-      return displayName.includes(term) || 
-             description.includes(term) || 
+
+      return displayName.includes(term) ||
+             description.includes(term) ||
              category.includes(term);
     });
-  }, [searchTerm]);
+  }, [searchTerm, elements]);
 
   // ポップアップが開いたときの初期化
   useEffect(() => {
@@ -113,7 +140,7 @@ export function LabelSelector({
 
   // 要素選択ハンドラー
   const handleSelectElement = (element: FigureSkatingElement) => {
-    onSelect(element);
+    onSelect(element.id);
     onClose();
   };
 
@@ -174,7 +201,7 @@ export function LabelSelector({
             className="label-selector-search-input"
           />
           <div className="label-selector-count">
-            {filteredElements.length} / {FIGURE_SKATING_ELEMENTS_ARRAY.length} 件
+            {filteredElements.length} / {elements.length} 件
           </div>
         </div>
 
@@ -203,9 +230,6 @@ export function LabelSelector({
                   <div className="label-name">{displayName}</div>
                   <div className="label-category">{element.category.replace(/[_]/g, ' ')}</div>
                 </div>
-                {element.hotkey && (
-                  <div className="label-hotkey">{element.hotkey}</div>
-                )}
                 {isCurrent && (
                   <div className="label-current-indicator">現在</div>
                 )}
