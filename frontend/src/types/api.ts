@@ -74,8 +74,9 @@ export interface LabelItem {
   elementId: number;
   color: string;
   description?: string;
-  hotkey?: string;
   enabled: boolean;
+  name?: string;
+  category?: string;
 }
 
 export interface LabelSet {

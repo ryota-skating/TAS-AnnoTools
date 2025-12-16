@@ -261,6 +261,34 @@ export async function setupDatabase(): Promise<void> {
     )
   `);
 
+  // Video assignments table (for per-user video access control)
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS video_assignments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      assignment_type TEXT CHECK(assignment_type IN ('pattern', 'explicit')) NOT NULL DEFAULT 'pattern',
+
+      competition TEXT,
+      gender TEXT,
+      number_start INTEGER,
+      number_end INTEGER,
+
+      video_filename TEXT,
+
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_by TEXT NOT NULL,
+      notes TEXT,
+
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by) REFERENCES users(id),
+
+      CHECK (
+        (assignment_type = 'pattern' AND number_start IS NOT NULL AND number_end IS NOT NULL AND number_start <= number_end) OR
+        (assignment_type = 'explicit' AND video_filename IS NOT NULL)
+      )
+    )
+  `);
+
   // Create indexes for better performance
   await db.run('CREATE INDEX IF NOT EXISTS idx_segments_video_frames ON annotation_segments(video_id, start_frame, end_frame)');
   await db.run('CREATE INDEX IF NOT EXISTS idx_segments_element ON annotation_segments(element_id)');
@@ -268,6 +296,8 @@ export async function setupDatabase(): Promise<void> {
   await db.run('CREATE INDEX IF NOT EXISTS idx_login_attempts_username_time ON login_attempts(username, attempt_time)');
   await db.run('CREATE INDEX IF NOT EXISTS idx_performance_type_time ON performance_metrics(type, recorded_at)');
   await db.run('CREATE INDEX IF NOT EXISTS idx_videos_hash ON videos(hash)');
+  await db.run('CREATE INDEX IF NOT EXISTS idx_video_assignments_user ON video_assignments(user_id)');
+  await db.run('CREATE INDEX IF NOT EXISTS idx_video_assignments_type ON video_assignments(assignment_type)');
 
   // Create default admin user if none exists
   await createDefaultAdminUser();

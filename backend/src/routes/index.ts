@@ -11,12 +11,21 @@ import { labelRoutes } from './labels';
 import { userRoutes } from './users';
 import { performanceRoutes } from './performance';
 import { adminRoutes } from './admin';
+import { videoAssignmentRoutes } from './videoAssignments';
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // API prefix
   await fastify.register(async function (fastify) {
     // Authentication routes (no auth required)
     await fastify.register(authRoutes, { prefix: '/auth' });
+
+    // Video streaming route (no auth required - HTML5 video can't send auth headers)
+    // Security: Video URLs are only accessible after login to get the video list
+    await fastify.register(async function (fastify) {
+      // Import streaming-specific routes
+      const { videoStreamRoutes } = await import('./videos');
+      await fastify.register(videoStreamRoutes, { prefix: '/videos' });
+    });
 
     // Protected routes (require authentication)
     await fastify.register(async function (fastify) {
@@ -25,7 +34,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
         try {
           await request.jwtVerify();
         } catch (err) {
-          reply.status(401).send({ 
+          reply.status(401).send({
             error: 'Unauthorized',
             message: 'Valid authentication token required'
           });
@@ -39,6 +48,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
       await fastify.register(userRoutes, { prefix: '/users' });
       await fastify.register(performanceRoutes, { prefix: '/performance' });
       await fastify.register(adminRoutes, { prefix: '/admin' });
+      await fastify.register(videoAssignmentRoutes, { prefix: '/video-assignments' });
 
     });
   }, { prefix: '/api' });

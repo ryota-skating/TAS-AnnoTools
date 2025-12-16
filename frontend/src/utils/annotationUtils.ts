@@ -41,14 +41,14 @@ export function processAnnotationLabelsToRects(
       // End previous segment if exists
       if (currentLabel !== 'NONE' && currentLabel !== '' && startFrame !== -1) {
         const element = getElementByName(currentLabel as any);
-        if (element) {
-          rects.push({
-            startFrame,
-            endFrame: i - 1,
-            color: element.color || '#64748b',
-            label: currentLabel
-          });
-        }
+        // Always create rect even if element is not found (for ambiguous labels, etc.)
+        const color = element?.color || '#9ca3af'; // Gray color for unrecognized labels
+        rects.push({
+          startFrame,
+          endFrame: i - 1,
+          color,
+          label: currentLabel
+        });
       }
       // Start new segment
       currentLabel = label;
@@ -56,11 +56,13 @@ export function processAnnotationLabelsToRects(
     } else if (label === 'NONE' && currentLabel !== 'NONE' && currentLabel !== '') {
       // End current segment
       const element = getElementByName(currentLabel as any);
-      if (element && startFrame !== -1) {
+      // Always create rect even if element is not found (for ambiguous labels, etc.)
+      if (startFrame !== -1) {
+        const color = element?.color || '#9ca3af'; // Gray color for unrecognized labels
         rects.push({
           startFrame,
           endFrame: i - 1,
-          color: element.color || '#64748b',
+          color,
           label: currentLabel
         });
       }
@@ -72,14 +74,14 @@ export function processAnnotationLabelsToRects(
   // Handle final segment
   if (currentLabel !== 'NONE' && currentLabel !== '' && startFrame !== -1) {
     const element = getElementByName(currentLabel as any);
-    if (element) {
-      rects.push({
-        startFrame,
-        endFrame: endFrame - 1,
-        color: element.color || '#64748b',
-        label: currentLabel
-      });
-    }
+    // Always create rect even if element is not found (for ambiguous labels, etc.)
+    const color = element?.color || '#9ca3af'; // Gray color for unrecognized labels
+    rects.push({
+      startFrame,
+      endFrame: endFrame - 1,
+      color,
+      label: currentLabel
+    });
   }
 
   return rects;
@@ -88,6 +90,7 @@ export function processAnnotationLabelsToRects(
 /**
  * Convert annotation labels array to label segments for AnnotationPanel
  * Reuses the same logic as processAnnotationLabelsToRects but returns different format
+ * Creates dummy elements for unrecognized labels (like ambiguous labels)
  */
 export function processAnnotationLabelsToSegments(
   annotationLabels: string[]
@@ -96,12 +99,28 @@ export function processAnnotationLabelsToSegments(
 
   return rects.map(rect => {
     const element = getElementByName(rect.label as any);
+
+    // If element not found, create a dummy element for ambiguous/unrecognized labels
+    if (!element) {
+      return {
+        element: {
+          id: -1 as any, // Dummy ID for unrecognized labels
+          name: rect.label as any,
+          category: rect.label as any,
+          color: rect.color,
+          description: rect.label
+        },
+        startFrame: rect.startFrame,
+        endFrame: rect.endFrame
+      };
+    }
+
     return {
-      element: element!,
+      element: element,
       startFrame: rect.startFrame,
       endFrame: rect.endFrame
     };
-  }).filter(segment => segment.element);
+  });
 }
 
 /**

@@ -47,34 +47,31 @@ export function VideoSelector({
   }, [loadVideos]);
 
   const handleVideoSelect = (video: VideoMetadata) => {
-    // Generate direct video file URL for optimized video playback
+    // Generate streaming video URL with HTTP Range Request support
 
-    
     let videoUrl: string;
-    
-    // video.path comes from the API and should be like "/videos/optimized/filename.mp4"
-    if (video.path && video.path.startsWith('/videos/optimized/')) {
-      // Use the path directly from the API
-      const backendBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
-      videoUrl = `${backendBaseUrl}${video.path}`;
-    } else {
-      // Fallback: construct optimized path from video.id
-      let filename = video.id;
-      if (filename.startsWith('/videos/')) {
-        filename = filename.substring('/videos/'.length);
-      } else if (filename.startsWith('videos/')) {
-        filename = filename.substring('videos/'.length);
-      }
-      
-      // Construct direct video file URL pointing to optimized directory
-      const backendBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
-      videoUrl = `${backendBaseUrl}/videos/optimized/${filename}`;
-      
-      // Ensure .mp4 extension
-      if (!videoUrl.endsWith('.mp4')) {
-        videoUrl += '.mp4';
-      }
+    let filename = video.filename || video.id;
+
+    // Extract filename from path or id
+    if (filename.startsWith('/videos/')) {
+      filename = filename.substring('/videos/'.length);
+    } else if (filename.startsWith('videos/')) {
+      filename = filename.substring('videos/'.length);
     }
+
+    // Remove 'optimized/' prefix if present
+    if (filename.startsWith('optimized/')) {
+      filename = filename.substring('optimized/'.length);
+    }
+
+    // Ensure .mp4 extension
+    if (!filename.endsWith('.mp4')) {
+      filename += '.mp4';
+    }
+
+    // Use new streaming endpoint with HTTP Range Request support
+    const backendBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
+    videoUrl = `${backendBaseUrl}/api/videos/stream/optimized/${encodeURIComponent(filename)}`;
     
 
     onVideoSelect(video, videoUrl);

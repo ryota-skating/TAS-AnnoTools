@@ -112,3 +112,24 @@ build/
 # Test coverage
 coverage/
 .nyc_output
+
+# Claude Code configuration
+.claude_code_config.json
+
+# Local scripts and runtime files
+*.bat
+*.ps1
+*.pids
+services.pids
+ts-node
+
+# Backup and log files
+*.backup_*
+*_log.txt
+rename_log.txt
+
+# User-specific data files
+starting_number_skaters_name.csv
+
+# Deleted files markers
+*.deleted

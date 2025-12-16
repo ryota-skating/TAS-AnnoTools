@@ -4,10 +4,11 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { FIGURE_SKATING_ELEMENTS, type FigureSkatingElement, getElementByName } from '@shared/types/figure-skating';
+import { getElementByName, getElementById } from '@shared/types/figure-skating';
 import { LabelSelector } from '../annotation/LabelSelector';
 import { apiService } from '../../services/api';
 import { processAnnotationLabelsToRects, type AnnotationRect } from '../../utils/annotationUtils';
+import type { LabelSet } from '../../types/api';
 import './VideoPlayer.css';
 
 interface SimpleVideoPlayerProps {
@@ -16,6 +17,7 @@ interface SimpleVideoPlayerProps {
   fps?: number;
   currentFrame?: number;
   annotationLabels?: string[]; // Added to receive annotation labels from parent
+  labelSet?: LabelSet | null;
   onFrameChange?: (frame: number) => void;
   onReady?: (duration: number, fps: number) => void;
   onSegmentCreate?: (startFrame: number, endFrame: number, elementId: number) => void;
@@ -29,6 +31,7 @@ export function SimpleVideoPlayer({
   fps = 30,
   currentFrame = 0,
   annotationLabels: externalAnnotationLabels,
+  labelSet,
   onFrameChange,
   onReady,
   onSegmentCreate,
@@ -55,8 +58,13 @@ export function SimpleVideoPlayer({
   const [isSeeking, setIsSeeking] = useState(false);
   const frameSteppingInProgressRef = useRef(false);
   const lastKeyPressRef = useRef<number>(0);
-  const keyDebounceMs = 100; // Debounce key inputs by 100ms
+  const keyDebounceMs = 66; // Debounce key inputs by 66ms (1.5x faster: ~15 FPS)
   const currentFrameRef = useRef<number>(0); // Track current frame accurately
+
+  // 2x playback and rewind state
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+  const [isRewinding, setIsRewinding] = useState(false);
+  const rewindIntervalRef = useRef<number | null>(null);
 
   // Reset ready state when URL changes
   useEffect(() => {
@@ -182,26 +190,45 @@ export function SimpleVideoPlayer({
 
   const togglePlayback = useCallback(() => {
     if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
+      const video = videoRef.current;
+
+      // If in 2x rewind mode, stop rewinding first (takes priority over play/pause)
+      if (isRewinding) {
+        if (rewindIntervalRef.current !== null) {
+          cancelAnimationFrame(rewindIntervalRef.current);
+          rewindIntervalRef.current = null;
+        }
+        setIsRewinding(false);
+        // Video is already paused during rewind, so just return
+        return;
+      }
+
+      if (video.paused) {
+        // Resume playback
+        video.play();
       } else {
-        videoRef.current.pause();
+        // Pause playback
+        video.pause();
+
+        // If in 2x playback mode, reset to normal speed
+        if (playbackRate === 2.0) {
+          video.playbackRate = 1.0;
+          setPlaybackRate(1.0);
+        }
       }
     }
-  }, []);
+  }, [playbackRate, isRewinding]);
 
 const stepFrame = useCallback((delta: number) => {
     if (!videoRef.current || duration <= 0) return;
 
-    // Prevent frame stepping during seek operations
-    if (isSeeking || frameSteppingInProgressRef.current) return;
+    // Only prevent during active seeking (removed frameSteppingInProgressRef check for Phase 2 optimization)
+    if (isSeeking) return;
 
     // Debounce rapid key inputs
     const now = Date.now();
     if (now - lastKeyPressRef.current < keyDebounceMs) return;
     lastKeyPressRef.current = now;
-
-    frameSteppingInProgressRef.current = true;
 
     const video = videoRef.current;
     // Use current frame reference for more accurate frame tracking
@@ -209,21 +236,20 @@ const stepFrame = useCallback((delta: number) => {
     const totalFrames = Math.floor(duration * fps);
     const newFrame = Math.max(0, Math.min(totalFrames - 1, currentFrameNum + delta));
 
-    // 既に目標フレームにいる場合はスキップ
+    // Skip if already at target frame
     if (newFrame === currentFrameNum) {
-      frameSteppingInProgressRef.current = false;
       return;
     }
 
-    // 動画を一時停止
+    // Pause video if playing
     if (!video.paused) {
       video.pause();
     }
 
-    // フレーム位置に対応する時間を設定 - フレーム中央時刻を指定
+    // Set frame position - specify center time of frame
     const targetTime = (newFrame + 0.5) / fps;
     const clampedTime = Math.max(0, Math.min(duration - 0.01, targetTime));
-    
+
     video.currentTime = clampedTime;
     setCurrentTime(clampedTime);
     onFrameChange?.(newFrame);
@@ -241,6 +267,107 @@ const stepFrame = useCallback((delta: number) => {
       videoRef.current.currentTime = duration - 0.1; // 0.1s before end
     }
   }, [duration]);
+
+  // 2x rewind stop function (defined early for use in other functions)
+  const stopRewind2x = useCallback(() => {
+    if (rewindIntervalRef.current !== null) {
+      cancelAnimationFrame(rewindIntervalRef.current);
+      rewindIntervalRef.current = null;
+    }
+    setIsRewinding(false);
+  }, []);
+
+  // 2x playback toggle
+  const togglePlayback2x = useCallback(() => {
+    if (!videoRef.current) return;
+
+    // Stop rewinding if active
+    if (isRewinding) {
+      stopRewind2x();
+    }
+
+    const video = videoRef.current;
+
+    if (playbackRate === 2.0) {
+      // Return to normal speed
+      video.playbackRate = 1.0;
+      setPlaybackRate(1.0);
+    } else {
+      // Switch to 2x speed
+      video.playbackRate = 2.0;
+      setPlaybackRate(2.0);
+
+      // Start playing if paused
+      if (video.paused) {
+        video.play();
+      }
+    }
+  }, [playbackRate, isRewinding]);
+
+  // 2x rewind functions
+  const startRewind2x = useCallback(() => {
+    if (!videoRef.current || duration <= 0 || isRewinding) return;
+
+    const video = videoRef.current;
+
+    // Pause video for frame-based rewinding
+    if (!video.paused) {
+      video.pause();
+    }
+
+    // Reset playback rate if it was 2x
+    if (playbackRate === 2.0) {
+      video.playbackRate = 1.0;
+      setPlaybackRate(1.0);
+    }
+
+    setIsRewinding(true);
+
+    // Use requestAnimationFrame for smooth 2x rewind
+    let lastFrameTime = performance.now();
+    const targetFrameInterval = (1000 / fps) / 2; // 2x speed
+
+    const rewindFrame = () => {
+      const now = performance.now();
+      const elapsed = now - lastFrameTime;
+
+      if (elapsed >= targetFrameInterval) {
+        const currentFrameNum = currentFrameRef.current;
+
+        if (currentFrameNum > 0) {
+          const newFrame = Math.max(0, currentFrameNum - 2); // Step back 2 frames for 2x speed
+          const targetTime = (newFrame + 0.5) / fps;
+          const clampedTime = Math.max(0, Math.min(duration - 0.01, targetTime));
+
+          video.currentTime = clampedTime;
+          setCurrentTime(clampedTime);
+          onFrameChange?.(newFrame);
+          currentFrameRef.current = newFrame;
+
+          lastFrameTime = now;
+        } else {
+          // Reached beginning, stop rewinding
+          stopRewind2x();
+          return;
+        }
+      }
+
+      if (rewindIntervalRef.current !== null) {
+        rewindIntervalRef.current = requestAnimationFrame(rewindFrame);
+      }
+    };
+
+    rewindIntervalRef.current = requestAnimationFrame(rewindFrame);
+  }, [duration, fps, onFrameChange, playbackRate, isRewinding, stopRewind2x]);
+
+  // Cleanup rewind on unmount
+  useEffect(() => {
+    return () => {
+      if (rewindIntervalRef.current !== null) {
+        cancelAnimationFrame(rewindIntervalRef.current);
+      }
+    };
+  }, []);
 
   const seekToTime = useCallback((targetTime: number) => {
     if (!videoRef.current || duration <= 0) return;
@@ -338,47 +465,81 @@ const stepFrame = useCallback((delta: number) => {
 
   }, []);
 
-  const handleLabelSelect = useCallback(async (element: FigureSkatingElement) => {
+  const handleLabelSelect = useCallback(async (elementId: number) => {
     if (segmentStart !== null && segmentEnd !== null) {
       const startFrame = Math.min(segmentStart, segmentEnd);
       const endFrame = Math.max(segmentStart, segmentEnd);
-      
+
+      // Find the element from labelSet
+      const element = labelSet?.items.find(item => item.elementId === elementId);
+      if (!element) {
+        console.error('Element not found:', elementId);
+        alert('Error: Selected label not found. Please try again.');
+        return;
+      }
+
+      // Get element name, fallback to getElementById if not in labelSet
+      let elementName = element.name;
+      if (!elementName) {
+        const fallbackElement = getElementById(elementId);
+        if (fallbackElement) {
+          elementName = fallbackElement.name;
+        } else {
+          console.error('Element name not found for ID:', elementId);
+          alert('Error: Label name not found. Please try again.');
+          return;
+        }
+      }
+
       if (videoFilename && apiService.token) {
         try {
           // Create a copy of current annotation labels
           const updatedLabels = [...annotationLabels];
-          
+
           // Ensure the array has enough elements
           const maxFrame = Math.max(endFrame, updatedLabels.length - 1);
           while (updatedLabels.length <= maxFrame) {
             updatedLabels.push('NONE');
           }
-          
+
           // Update labels for the selected segment
           for (let i = startFrame; i <= endFrame; i++) {
-            updatedLabels[i] = element.name;
+            updatedLabels[i] = elementName;
           }
-          
-          // Save to backend immediately
+
+          console.log('Saving annotation:', {
+            videoFilename,
+            startFrame,
+            endFrame,
+            elementName,
+            updatedLabelsLength: updatedLabels.length
+          });
+
+          // Save to backend immediately with timeout
           const response = await apiService.updateAnnotationBatch(videoFilename, updatedLabels);
           if (response.success) {
             setAnnotationLabels(updatedLabels);
             onAnnotationLabelsChange?.(updatedLabels);
-
-
+            console.log('Annotation saved successfully');
           } else {
             console.error('Failed to save annotation:', response);
+            alert(`Failed to save annotation: ${response.message || 'Unknown error'}`);
+            return; // Don't clear selection if save failed
           }
         } catch (error) {
           console.error('Error saving annotation:', error);
+          alert(`Error saving annotation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          return; // Don't clear selection if error occurred
         }
+      } else {
+        console.warn('No videoFilename or token, skipping backend save');
       }
-      
+
       // Also call the original segment create callback if provided
-      onSegmentCreate?.(startFrame, endFrame, element.id);
+      onSegmentCreate?.(startFrame, endFrame, elementId);
       clearSegmentSelection();
     }
-  }, [segmentStart, segmentEnd, videoFilename, annotationLabels, onSegmentCreate, clearSegmentSelection]);
+  }, [segmentStart, segmentEnd, videoFilename, annotationLabels, labelSet, onSegmentCreate, clearSegmentSelection, onAnnotationLabelsChange]);
 
   const handleCloseLabelSelector = useCallback(() => {
     setShowLabelSelector(false);
@@ -438,8 +599,28 @@ const stepFrame = useCallback((delta: number) => {
         event.preventDefault();
         clearSegmentSelection();
         break;
+      case '>':
+      case '.':
+        // Shift+> for 2x playback toggle
+        if (isShiftPressed) {
+          event.preventDefault();
+          togglePlayback2x();
+        }
+        break;
+      case '<':
+      case ',':
+        // Shift+< for 2x rewind toggle
+        if (isShiftPressed) {
+          event.preventDefault();
+          if (isRewinding) {
+            stopRewind2x();
+          } else {
+            startRewind2x();
+          }
+        }
+        break;
     }
-  }, [isReady, stepFrame, togglePlayback, goToStart, goToEnd, isSelecting, startSegmentSelection, updateSegmentSelection, clearSegmentSelection]);
+  }, [isReady, stepFrame, togglePlayback, goToStart, goToEnd, isSelecting, startSegmentSelection, updateSegmentSelection, clearSegmentSelection, togglePlayback2x, startRewind2x, stopRewind2x, isRewinding]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (!isReady) return;
@@ -490,12 +671,13 @@ const stepFrame = useCallback((delta: number) => {
     if (annotationLabels.length === 0) {
       return isLoadingAnnotations ? 'Loading...' : 'No annotation';
     }
-    
+
     if (frameNum >= 0 && frameNum < annotationLabels.length) {
       const label = annotationLabels[frameNum];
-      return label === 'NONE' ? 'No label' : label.replace(/_/g, ' ');
+      if (!label || label === 'NONE') return 'No label';
+      return label.replace(/_/g, ' ');
     }
-    
+
     return 'No label';
   }, [annotationLabels, isLoadingAnnotations]);
 
@@ -514,7 +696,8 @@ const stepFrame = useCallback((delta: number) => {
     
     // Find the element by name to get its color
     const element = getElementByName(label as any);
-    const color = element?.color || '#64748b';
+    // Use gray color for ambiguous/unrecognized labels
+    const color = element?.color || '#9ca3af';
 
     return color;
   }, [annotationLabels]);
@@ -621,6 +804,7 @@ const stepFrame = useCallback((delta: number) => {
               isOpen={showLabelSelector}
               position={labelSelectorPosition}
               currentLabel={undefined} // セグメント新規作成時は現在ラベルなし
+              labelSet={labelSet}
               onSelect={handleLabelSelect}
               onClose={handleCloseLabelSelector}
             />
@@ -634,11 +818,17 @@ const stepFrame = useCallback((delta: number) => {
                   <div className="seekbar-playback-controls">
                     <button
                       disabled={!isReady}
-                      onClick={togglePlayback}
-                      title="Play/Pause (Space)"
-                      className={`playback-btn ${videoRef.current && !videoRef.current.paused ? 'playing' : 'paused'}`}
+                      onClick={() => {
+                        if (isRewinding) {
+                          stopRewind2x();
+                        } else {
+                          startRewind2x();
+                        }
+                      }}
+                      title="2x Rewind (Shift+<)"
+                      className={`playback-btn ${isRewinding ? 'active' : ''}`}
                     >
-                      {videoRef.current && !videoRef.current.paused ? '⏸' : '▶'}
+                      ⏪
                     </button>
                     <button
                       disabled={!isReady}
@@ -650,11 +840,27 @@ const stepFrame = useCallback((delta: number) => {
                     </button>
                     <button
                       disabled={!isReady}
+                      onClick={togglePlayback}
+                      title="Play/Pause (Space)"
+                      className={`playback-btn ${videoRef.current && !videoRef.current.paused ? 'playing' : 'paused'}`}
+                    >
+                      {videoRef.current && !videoRef.current.paused ? '⏸' : '▶'}
+                    </button>
+                    <button
+                      disabled={!isReady}
                       onClick={() => stepFrame(1)}
                       title="Next frame (→)"
                       className="frame-btn"
                     >
                       ⏭
+                    </button>
+                    <button
+                      disabled={!isReady}
+                      onClick={togglePlayback2x}
+                      title="2x Playback (Shift+>)"
+                      className={`playback-btn ${playbackRate === 2.0 ? 'active' : ''}`}
+                    >
+                      ⏩
                     </button>
                   </div>
 

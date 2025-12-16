@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { AnnotationSegment } from '../../types/api';
-import { FIGURE_SKATING_ELEMENTS, getElementByName, type FigureSkatingElement } from '@shared/types/figure-skating';
+import type { AnnotationSegment, LabelSet } from '../../types/api';
+import { getElementById } from '@shared/types/figure-skating';
 import { LabelSelector } from './LabelSelector';
 import { apiService } from '../../services/api';
 import { processAnnotationLabelsToSegments, calculateAnnotationStats, type LabelSegment } from '../../utils/annotationUtils';
@@ -26,6 +26,7 @@ interface AnnotationPanelProps {
   onFrameClick?: (frameNumber: number) => void; // Navigation to specific frame
   videoFilename?: string; // For API calls
   onAnnotationLabelsChange?: (labels: string[]) => void; // For updating parent state
+  labelSet?: LabelSet | null;
 }
 
 interface AnnotationStats {
@@ -51,7 +52,8 @@ export function AnnotationPanel({
   annotationLabels = [],
   onFrameClick,
   videoFilename,
-  onAnnotationLabelsChange
+  onAnnotationLabelsChange,
+  labelSet
 }: AnnotationPanelProps) {
   const [annotationStats, setAnnotationStats] = useState<AnnotationStats>({
     totalSegments: 0,
@@ -177,25 +179,40 @@ export function AnnotationPanel({
     setSegmentToDelete(null);
   };
 
-  const handleLabelSelect = async (element: FigureSkatingElement) => {
+  const handleLabelSelect = async (elementId: number) => {
     if (!editingSegment || !annotationLabels) return;
-    
 
+    // Try to find element from labelSet first (includes ambiguous labels from CSV)
+    let elementName: string | undefined;
+    if (labelSet && labelSet.items) {
+      // Search through items in labelSet
+      const foundItem = labelSet.items.find(item => item.elementId === elementId);
+      if (foundItem && foundItem.name) {
+        elementName = foundItem.name;
+      }
+    }
+
+    // Fallback to getElementById if not found in labelSet
+    if (!elementName) {
+      const element = getElementById(elementId);
+      if (!element) return;
+      elementName = element.name;
+    }
 
     // Create updated annotation labels
     const updatedLabels = [...annotationLabels];
-    
+
     // Ensure the array has enough elements
     const maxFrame = Math.max(editingSegment.endFrame, updatedLabels.length - 1);
     while (updatedLabels.length <= maxFrame) {
       updatedLabels.push('NONE');
     }
-    
+
     // Update labels for the selected segment
     for (let i = editingSegment.startFrame; i <= editingSegment.endFrame; i++) {
-      updatedLabels[i] = element.name;
+      updatedLabels[i] = elementName;
     }
-    
+
     // Save to backend via API call
     if (videoFilename && apiService.token) {
       try {
@@ -210,7 +227,7 @@ export function AnnotationPanel({
         console.error('AnnotationPanel: Error saving annotation:', error);
       }
     }
-    
+
     setShowLabelSelector(false);
     setEditingSegment(null);
   };
@@ -323,6 +340,7 @@ export function AnnotationPanel({
         isOpen={showLabelSelector}
         position={labelSelectorPosition}
         currentLabel={editingSegment?.element.name}
+        labelSet={labelSet}
         onSelect={handleLabelSelect}
         onClose={handleCloseLabelSelector}
       />

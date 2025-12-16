@@ -14,7 +14,8 @@ import type {
   PerformanceMetric
 } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiError extends Error {
   constructor(
@@ -146,11 +147,11 @@ class ApiService {
 
   // Annotations
   async getAnnotations(videoId: string): Promise<AnnotationData> {
-    return this.request<AnnotationData>(`/annotations/${videoId}`);
+    return this.request<AnnotationData>(`/annotations/${encodeURIComponent(videoId)}`);
   }
 
   async getVideoAnnotations(videoId: string): Promise<AnnotationSegment[]> {
-    const data = await this.request<AnnotationData>(`/annotations/${videoId}`);
+    const data = await this.request<AnnotationData>(`/annotations/${encodeURIComponent(videoId)}`);
     return data.segments || [];
   }
 
@@ -175,7 +176,7 @@ class ApiService {
   }
 
   async saveAnnotations(
-    videoId: string, 
+    videoId: string,
     segments: AnnotationSegment[]
   ): Promise<{
     success: boolean;
@@ -184,7 +185,7 @@ class ApiService {
     segmentCount: number;
     checksum: string;
   }> {
-    return this.request(`/annotations/${videoId}`, {
+    return this.request(`/annotations/${encodeURIComponent(videoId)}`, {
       method: 'POST',
       body: JSON.stringify({ segments }),
     });
@@ -199,7 +200,7 @@ class ApiService {
     data: any;
     message: string;
   }> {
-    return this.request(`/annotations/${videoFilename}/batch`, {
+    return this.request(`/annotations/${encodeURIComponent(videoFilename)}/batch`, {
       method: 'PUT',
       body: JSON.stringify({ labels }),
     });
@@ -218,7 +219,7 @@ class ApiService {
       lastModified: string;
     };
   }> {
-    return this.request(`/annotations/${videoFilename}`);
+    return this.request(`/annotations/${encodeURIComponent(videoFilename)}`);
   }
 
   async exportAnnotations(
@@ -226,7 +227,7 @@ class ApiService {
     format: 'json' | 'csv' = 'json'
   ): Promise<Blob> {
     const response = await fetch(
-      `${API_BASE_URL}/annotations/${videoId}/export?format=${format}`,
+      `${API_BASE_URL}/annotations/${encodeURIComponent(videoId)}/export?format=${format}`,
       {
         headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
       }
